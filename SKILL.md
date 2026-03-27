@@ -170,9 +170,6 @@ dokku config myapp
 
 # View specific var with --global flag
 dokku config:get --global DOKKU_SCALE
-
-# View config report for all apps
-dokku config:report --all
 ```
 
 ### Domain Management
@@ -242,7 +239,6 @@ dokku report
 
 # Specific report for app
 dokku domains:report myapp
-dokku config:report myapp
 ```
 
 ---
@@ -265,21 +261,19 @@ dokku git:from-image myapp nginx:alpine
 
 ### Deploy from Git Repository
 
-#### Public Repositories
+**Important:** `git:sync` with HTTPS URLs prompts for credentials (even for public repos) and doesn't work non-interactively. Use SSH URLs with deploy keys, or deploy via `git push` from your local machine.
+
+#### Public Repositories (via git push)
 
 ```bash
-# Create app
-dokku apps:create myapp
+# On local machine, add remote
+git remote add dokku dokku@your-server:myapp
 
-# Allow the git host (adds to known_hosts)
-dokku git:allow-host github.com
-
-# Clone and build from remote repo
-dokku git:sync --build myapp https://github.com/user/repo.git
-
-# Specify branch/tag
-dokku git:sync --build myapp https://github.com/user/repo.git main
+# Push to deploy
+git push dokku main
 ```
+
+#### Private Repositories (SSH Key Method)
 
 #### Private Repositories (SSH Key Method)
 
@@ -831,13 +825,22 @@ curl http://myapp.domain.com/ready
 # 1. Create app
 dokku apps:create myapp
 
-# 2. Import config
-dokku config:import myapp < myapp-config.env
+# 2. Restore storage
+mkdir -p /var/lib/dokku/data/storage/myapp
+tar -xzf myapp-storage.tar.gz -C /var/lib/dokku/data/storage/
+# Note: If tar contains appname/ directory, move contents:
+cd /var/lib/dokku/data/storage/
+tar -xzf myapp-storage.tar.gz
+cp -r appname/* myapp/
 
-# 3. Restore storage
-tar -xzf myapp-storage.tar.gz -C /
+# 3. Mount storage
+dokku storage:mount myapp /var/lib/dokku/data/storage/myapp:/app/data
 
-# 4. Deploy
+# 4. Set config manually (export format not directly importable)
+# Extract values from backup and set:
+dokku config:set myapp KEY1=value1 KEY2=value2
+
+# 5. Deploy
 git push dokku main
 ```
 
