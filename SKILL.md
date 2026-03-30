@@ -611,15 +611,7 @@ dokku letsencrypt:list
 
 **Important:** The app's domain must have valid DNS pointing to your server IP before enabling Let's Encrypt.
 
-**Port 80 mapping required:** Let's Encrypt uses HTTP-01 challenge which requires port 80 to be accessible. If the app only listens on a specific port (e.g., 8080), add port 80 mapping first:
-
-```bash
-# Check current port mappings
-dokku ports:report myapp
-
-# Add port 80 → container port mapping
-dokku ports:add myapp http:80:8080
-```
+**Port 80 mapping required:** Let's Encrypt uses HTTP-01 challenge which requires port 80 to be accessible. If the app only listens on a specific port (e.g., 8080), add port 80 mapping first. See [Port Management](#port-management) for details.
 
 ### Certificate Management
 
@@ -788,6 +780,86 @@ dokku network:set myapp bind-all-interfaces false
 - Direct container access
 
 **Note:** Most deployments use the nginx proxy and don't need this setting.
+
+### Port Management
+
+Manage which ports are exposed and how traffic is routed to your app:
+
+```bash
+# View current port mappings for an app
+dokku ports:report myapp
+
+# View all port mappings (including scheme)
+dokku ports:report myapp --ports-map
+
+# Check what port the app listens on inside the container
+dokku config:get myapp DOKKU_PORT
+```
+
+#### Adding Port Mappings
+
+Expose additional ports or map host ports to container ports:
+
+```bash
+# Map host port 8080 to container port 80
+dokku ports:add myapp http:8080:80
+
+# Map multiple ports
+dokku ports:add myapp http:80:8080
+dokku ports:add myapp https:443:8080
+
+# Map custom TCP port
+dokku ports:add myapp tcp:3000:3000
+```
+
+#### Removing Port Mappings
+
+```bash
+# Remove a specific port mapping
+dokku ports:remove myapp http:8080:80
+
+# Clear all custom port mappings (resets to defaults)
+dokku ports:clear myapp
+```
+
+#### Common Port Scenarios
+
+| Scenario | Command |
+|----------|---------|
+| App listens on 8080, expose on 80 | `dokku ports:add myapp http:80:8080` |
+| Expose admin panel on separate port | `dokku ports:add myapp http:8081:8081` |
+| WebSocket support needed | Ensure port mapping includes WebSocket-capable scheme |
+| Debugging without proxy | `dokku network:set myapp bind-all-interfaces true` |
+
+#### Port Detection
+
+Dokku automatically detects ports via:
+1. **Dockerfile EXPOSE** instruction
+2. **HEROKU_PORT** environment variable
+3. **DOKKU_PORT** environment variable
+4. **PORT** environment variable (standard for Heroku-compatible apps)
+
+```bash
+# Set port explicitly (overrides detection)
+dokku config:set myapp DOKKU_PORT=8080
+
+# Check which port Dokku detected
+dokku ports:report myapp | grep detected
+```
+
+#### Troubleshooting Port Issues
+
+```bash
+# Check what's actually listening inside the container
+docker exec myapp.web.1 netstat -tlnp
+
+# Check nginx proxy configuration
+dokku nginx:show-config myapp
+
+# Check if ports are accessible from outside
+nc -zv your-server-ip 80
+nc -zv your-server-ip 443
+```
 
 ---
 
