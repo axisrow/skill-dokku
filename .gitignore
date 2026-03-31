@@ -5,3 +5,13 @@ CLAUDE.local.md
 # Exclude temp files
 *.tmp
 *.log
+.mcp.json
+
+# Exclude build artifacts
+dist/
+build/ 
+
+# Exclude IDE/editor specific files
+.vscode/
+.idea/
+
