@@ -823,6 +823,95 @@ dokku apps:unlock myapp
 
 ---
 
+## Running Commands in Containers
+
+### Enter a Running Container (`dokku enter`)
+
+Open an interactive shell in a running app container for debugging:
+
+```bash
+# Enter the web container (opens /bin/bash)
+dokku enter myapp
+
+# Enter a specific process type
+dokku enter myapp web
+
+# Enter a specific scaled instance
+dokku enter myapp web.2
+
+# Enter by container ID
+dokku enter myapp --container-id <container-id>
+
+# Run a command without interactive shell
+dokku enter myapp web echo "hello"
+dokku enter myapp web ls /app
+```
+
+**Behavior:**
+- Defaults to `/bin/bash` if no command is given
+- If the app has only one process type, `dokku enter myapp` connects to it automatically
+- For scaled processes, omitting the index connects to the first instance (`.1`)
+- This connects to an **existing running** container — no new container is created
+
+### Run One-Off Commands (`dokku run`)
+
+Execute a command in a **new ephemeral container** using the app's image and environment:
+
+```bash
+# Run a one-off command
+dokku run myapp python manage.py migrate
+dokku run myapp rails db:seed
+dokku run myapp npm run seed
+
+# Open an interactive shell in a fresh container
+dokku run myapp bash
+
+# Pass extra environment variables
+dokku run -e DEBUG=true -e LOG_LEVEL=verbose myapp python script.py
+
+# Run without TTY (useful in scripts/automation)
+dokku run --no-tty myapp echo "done"
+
+# Run a Procfile-defined command by name
+dokku run myapp console
+```
+
+**Container lifecycle:**
+- One-off containers are **automatically removed** when the process exits
+- Default TTL is **24 hours** (86400 seconds) — containers running longer are reaped
+- Override TTL: `dokku run --ttl-seconds 3600 myapp long-task.sh`
+
+### Detached One-Off Commands
+
+Run a command in the background:
+
+```bash
+# Start detached (returns container name immediately)
+dokku run:detached myapp python long_task.py
+
+# List running one-off containers
+dokku run:list myapp
+
+# View logs from a one-off container
+dokku run:logs myapp
+dokku run:logs --container <container-name> -t  # follow/tail
+
+# Stop a one-off container
+dokku run:stop myapp
+dokku run:stop --container <container-name>
+```
+
+### `enter` vs `run` — When to Use Which
+
+| | `dokku enter` | `dokku run` |
+|---|---|---|
+| Container | Connects to **existing** running container | Creates a **new** ephemeral container |
+| Use case | Debugging a live process, inspecting state | Migrations, seeds, one-off scripts |
+| Impact on app | Shares resources with running app | Isolated, no impact on running app |
+| Cleanup | Nothing to clean up | Container auto-removed on exit |
+
+---
+
 ## Network Management
 
 ### Network Configuration
