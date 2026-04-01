@@ -124,7 +124,7 @@ sudo DOKKU_TAG=v0.37.7 bash bootstrap.sh
 # Option 2: Install latest version automatically
 LATEST_VERSION=$(curl -s https://api.github.com/repos/dokku/dokku/releases/latest | jq -r '.tag_name')
 wget -NP . "https://dokku.com/install/$LATEST_VERSION/bootstrap.sh"
-sudo "DOKKU_TAG=$LATEST_VERSION" bash bootstrap.sh
+sudo DOKKU_TAG=$LATEST_VERSION bash bootstrap.sh
 ```
 
 ### Upgrade Dokku
@@ -222,7 +222,7 @@ dokku config:get myapp NODE_ENV
 dokku config:unset myapp DEBUG
 ```
 
-**Important:** `config:set` automatically restarts the app. Do NOT run `ps:restart` after setting config vars - this would cause a double restart.
+**Important:** `config:set` and `config:unset` automatically restart the app. Use `--no-restart` to prevent this (useful when setting multiple vars in sequence). Do NOT run `ps:restart` after setting config vars - this would cause a double restart.
 
 #### Managing Environment Variables Across Instances
 
@@ -543,6 +543,13 @@ dokku storage:list myapp
 
 # View storage report
 dokku storage:report myapp
+
+# === Docker Disk Usage ===
+# View Docker disk usage (images, containers, build cache)
+docker system df
+
+# View image sizes for apps
+docker images --format 'table {{.Repository}}\t{{.Size}}' | grep dokku/
 ```
 
 ---
@@ -579,22 +586,6 @@ dokku storage:report myapp
 
 # Unmount storage
 dokku storage:unmount myapp /var/lib/dokku/data/storage/myapp:/app/data
-```
-
-### Checking Disk Usage
-
-```bash
-# View overall disk usage
-df -h
-
-# View Docker disk usage (images, containers, build cache)
-docker system df
-
-# View per-app data directory size
-du -sh /home/dokku/*/
-
-# View image sizes for apps
-docker images --format 'table {{.Repository}}\t{{.Size}}' | grep dokku/
 ```
 
 ### App Data Directory Contents
@@ -1068,7 +1059,7 @@ Create `app.json` in your repo:
 | `path` | `/health`, `/ready`, etc. | HTTP endpoint to check |
 | `attempts` | Number (1-10) | Retry attempts before failing |
 | `wait` | Seconds (default 0) | Delay before first check |
-| `timeout` | Seconds (default 1) | Max time per check |
+| `timeout` | Seconds (default 5) | Max time per check |
 | `port` | Port number | Port to check (default from app) |
 
 ### Healthcheck Behavior
