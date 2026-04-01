@@ -519,12 +519,6 @@ du -sh /home/dokku/*/
 # Check app storage mount disk usage
 du -sh /var/lib/dokku/data/storage/*
 
-# List all storage mounts for an app
-dokku storage:list myapp
-
-# View storage report
-dokku storage:report myapp
-
 # === Docker Disk Usage ===
 # View Docker disk usage (images, containers, build cache)
 docker system df
@@ -701,51 +695,6 @@ dokku certs:add myapp /path/to/cert.crt /path/to/cert.key
 
 # Remove certificate
 dokku certs:remove myapp
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Conflict errors during deployment**
-```
-telegram.error.Conflict: Conflict: terminated by other getUpdates request
-```
-This is **expected** during zero-downtime deployments when old and new containers briefly overlap. It resolves automatically once the old container shuts down (60 seconds).
-
-**Locale warnings**
-```
-perl: warning: Setting locale failed
-```
-Harmless warnings. To fix:
-```bash
-sudo apt update && sudo apt install -y locales
-sudo locale-gen en_US.UTF-8
-sudo update-locale LANG=en_US.UTF-8
-```
-
-**Storage directory creation fails with hyphens**
-```bash
-# This may fail if app name contains hyphens:
-dokku storage:ensure-directory /var/lib/dokku/data/storage/my-app
-
-# Use mkdir instead:
-mkdir -p /var/lib/dokku/data/storage/my-app
-dokku storage:mount my-app /var/lib/dokku/data/storage/my-app:/app/data
-```
-
-**App won't start after deployment**
-```bash
-# Check logs
-dokku logs myapp -n 100
-
-# Check container status
-docker ps -a | grep myapp
-
-# Restart app
-dokku ps:restart myapp
 ```
 
 ---
@@ -1057,12 +1006,8 @@ curl -s -o /dev/null -w '%{http_code}' http://myapp.your-domain.com/
 
 **Tip:** Also check if the app binds to `127.0.0.1` (localhost only) instead of `0.0.0.0` (all interfaces). Apps that bind to localhost won't be reachable by nginx even with correct port mappings. Check the app's docs for a host/bind configuration option.
 
-#### Troubleshooting Port Issues
-
+**Additional debugging:**
 ```bash
-# Check what's actually listening inside the container
-docker exec myapp.web.1 netstat -tlnp
-
 # Check nginx proxy configuration
 dokku nginx:show-config myapp
 
@@ -1244,6 +1189,51 @@ dokku config:set myapp KEY1=value1 KEY2=value2
 
 # 5. Deploy
 git push dokku main
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Conflict errors during deployment**
+```
+telegram.error.Conflict: Conflict: terminated by other getUpdates request
+```
+This is **expected** during zero-downtime deployments when old and new containers briefly overlap. It resolves automatically once the old container shuts down (60 seconds).
+
+**Locale warnings**
+```
+perl: warning: Setting locale failed
+```
+Harmless warnings. To fix:
+```bash
+sudo apt update && sudo apt install -y locales
+sudo locale-gen en_US.UTF-8
+sudo update-locale LANG=en_US.UTF-8
+```
+
+**Storage directory creation fails with hyphens**
+```bash
+# This may fail if app name contains hyphens:
+dokku storage:ensure-directory /var/lib/dokku/data/storage/my-app
+
+# Use mkdir instead:
+mkdir -p /var/lib/dokku/data/storage/my-app
+dokku storage:mount my-app /var/lib/dokku/data/storage/my-app:/app/data
+```
+
+**App won't start after deployment**
+```bash
+# Check logs
+dokku logs myapp -n 100
+
+# Check container status
+docker ps -a | grep myapp
+
+# Restart app
+dokku ps:restart myapp
 ```
 
 ---
