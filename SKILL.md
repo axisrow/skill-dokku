@@ -547,8 +547,8 @@ For data that must persist across deployments (databases, uploads), use bind mou
 **Important:** Always use `/var/lib/dokku/data/storage/<appname>` as the **host path** for consistency. This is Dokku's standard storage location and makes backup and management easier.
 
 ```bash
-# Create a persistent storage directory (use standard path)
-dokku storage:ensure-directory /var/lib/dokku/data/storage/myapp
+# Create a persistent storage directory (relative to /var/lib/dokku/data/storage/)
+dokku storage:ensure-directory myapp
 
 # Mount storage to app (host:container)
 dokku storage:mount myapp /var/lib/dokku/data/storage/myapp:/app/data
@@ -961,9 +961,8 @@ dokku ports:clear myapp
 
 Dokku automatically detects ports via:
 1. **Dockerfile EXPOSE** instruction
-2. **HEROKU_PORT** environment variable
-3. **DOKKU_PORT** environment variable
-4. **PORT** environment variable (standard for Heroku-compatible apps)
+2. **`ports` plugin configuration** (via `dokku ports:set`)
+3. **PORT** environment variable (set automatically by Dokku for buildpack apps, defaults to 5000)
 
 ```bash
 # Set port explicitly (overrides detection)
@@ -1217,7 +1216,7 @@ sudo update-locale LANG=en_US.UTF-8
 **Storage directory creation fails with hyphens**
 ```bash
 # This may fail if app name contains hyphens:
-dokku storage:ensure-directory /var/lib/dokku/data/storage/my-app
+dokku storage:ensure-directory my-app
 
 # Use mkdir instead:
 mkdir -p /var/lib/dokku/data/storage/my-app
