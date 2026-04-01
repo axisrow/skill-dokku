@@ -997,6 +997,58 @@ nc -zv your-server-ip 443
 
 ---
 
+## Resource Limits
+
+Control CPU and memory allocation per app:
+
+```bash
+# Set memory limit for an app
+dokku resource:limit myapp --memory 512
+dokku resource:limit myapp --memory 1024
+
+# Set CPU limit (number of CPUs)
+dokku resource:limit myapp --cpu 1
+
+# Set both memory and CPU
+dokku resource:limit myapp --memory 512 --cpu 0.5
+
+# View current limits
+dokku resource:report myapp
+
+# View limits for all apps
+dokku resource:report
+
+# Clear limits (remove restrictions)
+dokku resource:limit-clear myapp
+```
+
+**Memory units:** Value is in megabytes by default. Apps exceeding their memory limit will be killed by Docker (OOMKilled).
+
+**CPU units:** Can be fractional (e.g., `0.5` = half a CPU core). Maps to Docker's `--cpus` flag.
+
+```bash
+# Set resource reservations (guaranteed minimums)
+dokku resource:reserve myapp --memory 256
+
+# Clear reservations
+dokku resource:reserve-clear myapp
+
+# View reservations
+dokku resource:report myapp
+```
+
+**Limits vs Reservations:**
+- **Limit** — maximum the app can use. Exceeding memory limit kills the container.
+- **Reserve** — guaranteed minimum. Docker won't schedule other containers into reserved resources.
+
+After changing limits, restart or rebuild the app:
+
+```bash
+dokku ps:restart myapp
+```
+
+---
+
 ## Docker Cleanup
 
 Old containers and images accumulate over time. Clean up periodically:
